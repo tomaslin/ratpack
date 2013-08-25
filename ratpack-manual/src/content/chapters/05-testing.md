@@ -24,6 +24,7 @@ Let's assume we have a Handler that looks like the following:
 
 ```
 class MyHandler implements Handler {
+  @Override
   void handle(Context context) {
     context.with {
       response.headers.set("set-header", "set")
@@ -70,26 +71,58 @@ class MyHandlerSpec extends Specification {
 
 ### Building Invocations
 
+In the closure passed to invoke(), you can set the following:
+
+* __requestHeaders__ - this is a [`Headers`](api/org/ratpackframework/http/Headers.html) object. You can add headers via requestHeaders.set(name, value).
+* __method__ - Either one of the following Strings: "GET", "POST", "HEAD", "PUT" or "DELETE". Defaults to "GET". 
+* __uri__ - this is a String like "/bar?myHorse=big"
+* __requestBody__ - this is a Netty ByteBuf that represents the content in the request body.
+* __timeout__ - if the invocation exceeds this time, it will throw a InvocationTimeoutException.
+
 ### Checking Invocation Results
 
-#### isSentResponse()
+Once invoked, an [`Invocation`](api/org/ratpackframework/groovy/test/handling/InvocationBuilder.html) can be checked for the following:
 
-#### isCalledNext()
+* __isSentResponse()__ - returns false when either next() or response.sendFile() is used. 
+* __isCalledNext()__ - For asynchronous handlers, set to true when next() is called in the handler.
+* __getBodyText()__ - the response body as a String
+* __getBodyBytes()__ - the response body in bytes
+* __getException()__ - if the handler throws an exception, this will map to it.
+* __getHeaders()__ - response headers
+* __getSentFile()__ - When a handler uses response.sendFile, this method will return the file being sent. 
+* __getStatus()__ - http status of the response
 
-#### getBodyText()
+### Testing Template Rendering
 
-#### getBodyBytes()
+We are also able to unit test handlers that render a template. 
 
-#### getException()
+The following handler renders out into a groovy template called index.html.
 
-#### getHeaders()
+```
+class RenderingHandler implements Handler {
+  @Override
+  void handle(Context context) {
+    context.render Template.groovyTemplate("index.html", a: "a")
+  }
+}
+```
 
-#### getSentFile()
+The corresponding specification looks as follows:
 
-#### getStatus()
+```
+def "can unit test a handler that renders a template"() {
+  when:
+  def invocation = invoke(new RenderingHandler()) {}
+  Template template = invocation.rendered(Template)
 
-### Testing Template Rendering - rendered(Class<T> type)
+  then:
+  template.id == "index.html"
+  template.model == [a: "a"]
+}
+```
+
+The Invocation interface contains a method called rendered. This will return a [`Template`](/api/org/ratpackframework/groovy/Template.html) that has been processed by the rendering engine. In your specifications, you can check that the correct id, model or type is being returned.
 
 ### Additional Resources
 
-If you want a full example, Rob Fletcher's Mid Century Ipsum project contains of a fully implemented [Handler](https://github.com/robfletcher/midcentury-ipsum/blob/master/src/main/groovy/com/energizedwork/midcenturyipsum/IpsumHandler.groovy) and associated [test](https://github.com/robfletcher/midcentury-ipsum/blob/master/src/test/groovy/com/energizedwork/midcenturyipsum/IpsumHandlerSpec.groovy).
+If you want a full example of unit testing in Ratpack Handlers, Rob Fletcher's Mid Century Ipsum project contains of a fully implemented [Handler](https://github.com/robfletcher/midcentury-ipsum/blob/master/src/main/groovy/com/energizedwork/midcenturyipsum/IpsumHandler.groovy) and associated [test](https://github.com/robfletcher/midcentury-ipsum/blob/master/src/test/groovy/com/energizedwork/midcenturyipsum/IpsumHandlerSpec.groovy).
