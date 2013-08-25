@@ -64,10 +64,6 @@ class MyHandlerSpec extends Specification {
 
 1. First, we import the invoke method from the [`InvocationBuilder`](api/org/ratpackframework/groovy/test/handling/InvocationBuilder.html) so that we can unit test our Handler
 
-```
-import static org.ratpackframework.groovy.test.handling.InvocationBuilder.invoke
-```
-
 2. The invoke method in our when block takes in an instance of the handler under test, followed by the invocation being built, which is a DSL. 
 
 3. Invoke returns a [`Invocation`](api/org/ratpackframework/groovy/test/handling/InvocationBuilder.html). We can query the invocation to make sure our implementation is correct.
